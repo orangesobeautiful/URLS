@@ -1,0 +1,8 @@
+frontend/.vscode/
+frontend/dist/
+frontend/node_modules/
+frontend/README.md
+
+backend/.vscode/
+backend/proto/gen/
+backend/server-data/

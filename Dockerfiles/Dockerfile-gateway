@@ -1,0 +1,56 @@
+# frontend dependency environment
+FROM --platform=$BUILDPLATFORM docker.io/library/node:16.17-alpine AS frontend-deps
+
+WORKDIR /frontend/
+
+RUN yarn global add @quasar/cli
+
+COPY ./frontend/package.json ./frontend/yarn.lock /frontend/
+
+RUN yarn
+
+# build frontend
+
+FROM --platform=$BUILDPLATFORM frontend-deps AS build-frontend
+
+WORKDIR /frontend/
+
+COPY ./frontend/ /frontend/
+
+RUN quasar build -m spa
+
+# build backend
+
+FROM --platform=$BUILDPLATFORM docker.io/owo9/go-buf:v1.20.2 as build-backend
+
+WORKDIR /backend/
+
+RUN go version
+
+# download go mod
+COPY ./backend/go.mod ./backend/go.sum /backend/
+
+RUN go mod download
+
+# copy source
+COPY ./backend/scripts/ /backend/scripts/
+COPY ./backend/proto/ /backend/proto/
+COPY ./backend/internal/ /backend/internal/
+COPY ./backend/gateway/ /backend/gateway/
+
+# start build
+ARG TARGETOS TARGETARCH
+
+RUN chmod +x scripts/build_proto.sh && scripts/build_proto.sh
+
+RUN GOOS=$TARGETOS GOARCH=$TARGETARCH CGO_ENABLED=0 go build -ldflags="-s" -o gateway-service URLS/gateway
+
+FROM scratch
+
+WORKDIR /urls/
+
+COPY --from=build-frontend /frontend/dist/spa/ /urls/public/web/
+COPY --from=build-backend /backend/gateway-service /urls/
+
+CMD ["/urls/gateway-service"]
+

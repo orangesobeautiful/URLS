@@ -1,0 +1,33 @@
+FROM --platform=$BUILDPLATFORM docker.io/owo9/go-buf:v1.20.2 as build-backend
+
+WORKDIR /backend/
+
+RUN go version
+
+# download go mod
+COPY ./backend/go.mod ./backend/go.sum /backend/
+
+RUN go mod download
+
+# copy source
+COPY ./backend/scripts/ /backend/scripts/
+COPY ./backend/proto/ /backend/proto/
+COPY ./backend/internal/ /backend/internal/
+COPY ./backend/link/ /backend/link/
+COPY ./backend/redirector/ /backend/redirector/
+
+# start build
+ARG TARGETOS TARGETARCH
+
+RUN chmod +x scripts/build_proto.sh && scripts/build_proto.sh
+
+RUN GOOS=$TARGETOS GOARCH=$TARGETARCH CGO_ENABLED=0 go build -ldflags="-s" -o redirector-service URLS/redirector
+
+FROM scratch
+
+WORKDIR /urls/
+
+COPY --from=build-backend /backend/redirector-service /urls/
+
+CMD ["/urls/redirector-service"]
+

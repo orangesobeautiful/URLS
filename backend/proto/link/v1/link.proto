@@ -1,0 +1,142 @@
+syntax = "proto3";
+
+package link.v1;
+
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "./linkPB";
+
+message PingResponse {
+  string msg = 1;
+}
+
+message UTMInfo {
+  string source = 1;
+  string medium = 2;
+  string campaign = 3;
+  string term = 4;
+  string content = 5;
+}
+
+message LinkCreateRequest {
+  int32 type = 1;
+  string custom = 2;
+  string dest = 3;
+  UTMInfo utm_info = 4;
+  string note = 5;
+  repeated string tags = 6;
+}
+
+message LinkCreateResponse {
+  string msg = 1;
+}
+
+message LinkInfo {
+  string id_hex = 1;
+  int32 type = 2;
+  string short = 3;
+  string host = 4;
+  string full_dest = 5;
+  bool is_custom = 6;
+  string creator_id_hex = 7;
+  string note = 8;
+  repeated string tags = 9;
+
+  uint64 total_clicks = 10;
+  map<string, uint64> country_clicks = 11;
+  map<string, uint64> os_clicks = 12;
+  map<string, uint64> device_clicks = 13;
+  map<string, uint64> browser_clicks = 14;
+
+  google.protobuf.Timestamp create_at = 15;
+}
+
+message LinkListRequest {
+  bool all_user = 1;
+  string user_id_hex = 2;
+  repeated string tags = 3;
+  string sort_by = 4;
+  bool reverse = 5;
+  uint32 page = 6;
+  uint32 page_size = 7;
+}
+
+message LinkListResponse {
+  repeated LinkInfo link_info_list = 1;
+}
+
+message LinkListCountRequest {
+  bool all_user = 1;
+  string user_id_hex = 2;
+  repeated string tags = 3;
+}
+
+message LinkListCountResponse {
+  uint64 total_num = 1;
+}
+
+message LinkPatchRequest {
+  string link_id_hex = 1;
+  bool patch_note = 2;
+  string note = 3;
+  bool patch_tags = 4;
+  repeated string tags = 5;
+}
+
+message LinkPatchResponse {
+  string msg = 1;
+}
+
+message LinkDeleteRequest {
+  string link_id_hex = 1;
+}
+
+message LinkDeleteResponse {
+  string msg = 1;
+}
+
+message UserTagsGetRequest {}
+
+message UserTagsGetResponse {
+  repeated string tags = 1;
+}
+
+service LinkService {
+  rpc Ping(google.protobuf.Empty) returns (PingResponse) {
+    option (google.api.http) = {get: "/v1/ping"};
+  }
+
+  rpc LinkCreate(LinkCreateRequest) returns (LinkCreateResponse) {
+    option (google.api.http) = {
+      post: "/v1/link"
+      body: "*"
+    };
+  }
+
+  // LinkList 根據指定條件查詢 link
+  rpc LinkList(LinkListRequest) returns (LinkListResponse) {
+    option (google.api.http) = {get: "/v1/links"};
+  }
+
+  // LinkListCount 根據指定條件會查詢到的總數量
+  rpc LinkListCount(LinkListCountRequest) returns (LinkListCountResponse) {
+    option (google.api.http) = {get: "/v1/links/count"};
+  }
+
+  rpc LinkPatch(LinkPatchRequest) returns (LinkPatchResponse) {
+    option (google.api.http) = {
+      patch: "/v1/link/{link_id_hex}"
+      body: "*"
+    };
+  }
+
+  rpc LinkDelete(LinkDeleteRequest) returns (LinkDeleteResponse) {
+    option (google.api.http) = {delete: "/v1/link/{link_id_hex}"};
+  }
+
+  rpc UserTagsGet(UserTagsGetRequest) returns (UserTagsGetResponse) {
+    option (google.api.http) = {get: "/v1/tags"};
+  }
+}

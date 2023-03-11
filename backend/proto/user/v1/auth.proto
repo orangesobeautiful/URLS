@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package user.v1;
+
+option go_package = "./userPB";
+
+message SigninRequest {
+  string email = 1;
+  string pwd = 2;
+}
+
+message SigninResponse {
+  string id = 1;
+}
+message GetAuthInfoResponse {
+  string user_id_hex = 1;
+}
+
+message GetAuthInfoRequest {
+  string signin_cookie_value = 1;
+}
+
+message LogoutResponse {
+  string msg = 1;
+}

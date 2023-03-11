@@ -1,0 +1,60 @@
+name: Go
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - ".github/workflows/ci-backend.yml"
+      - "backend/**"
+      - "!**.md"
+  pull_request:
+    branches: [ "main" ]
+    paths:
+      - ".github/workflows/ci-backend.yml"
+      - "backend/**"
+      - "!**.md"
+
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Set up Go
+      uses: actions/setup-go@v3
+      with:
+        go-version: '1.20'
+    
+    - name: checkout
+      uses: actions/checkout@v3
+
+    - name: Set up Buf
+      uses: bufbuild/buf-setup-action@v1.15.0
+      # Ensure that `buf` is installed
+    
+    - name: Checkout Buf Version
+      run: buf --version
+
+    - name: Install Proto Tools
+      working-directory: backend
+      run: scripts/install_proto_tool.sh
+    
+    - name: Build Proto
+      working-directory: backend
+      run: scripts/build_proto.sh
+      
+    - name: golangci-lint
+      uses: golangci/golangci-lint-action@v3
+      with:
+          # Optional: version of golangci-lint to use in form of v1.2 or v1.2.3 or `latest` to use the latest version
+          version: v1.51
+          # Optional: working directory, useful for monorepos
+          working-directory: backend
+        
+    - name: Test
+      working-directory: backend
+      run: go test -v ./...
+
+    - name: Build
+      working-directory: backend
+      run: CGO_ENABLED=0 go build -ldflags="-s"  -v ./...
+

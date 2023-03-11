@@ -1,0 +1,159 @@
+syntax = "proto3";
+
+package user.v1;
+
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+import "user/v1/auth.proto";
+
+option go_package = "./userPB";
+
+message PingResponse {
+  string msg = 1;
+}
+
+message RegisterRequest {
+  string email = 1;
+  string pwd = 2;
+}
+
+message RegisterResponse {
+  string id = 1;
+}
+
+message UserInfo {
+  string id_hex = 1;
+  string email = 2;
+  uint32 role = 3;
+  bool is_manager = 4;
+
+  uint64 normal_quota = 5;
+  uint64 normal_usage = 6;
+  uint64 custom_quota = 7;
+  uint64 custom_usage = 8;
+}
+
+message SelfInfoGetResponse {
+  UserInfo user_info = 1;
+}
+
+message UserInfoGetRequest {
+  string user_id_hex = 1;
+}
+
+message UserInfoGetResponse {
+  UserInfo user_info = 1;
+}
+
+message PwdChangeRequest {
+  string old_pwd = 1;
+  string new_pwd = 2;
+}
+
+message PwdChangeResponse {
+  string msg = 1;
+}
+
+message LinkQuotaGetRequest {
+  string user_id_hex = 1;
+}
+
+message LinkQuotaGetResponse {
+  uint64 normal_quota = 1;
+  uint64 normal_usage = 2;
+  uint64 custom_quota = 3;
+  uint64 custom_usage = 4;
+}
+
+message LinkQuotaUpdateRequest {
+  string user_id_hex = 1;
+  bool patch_normal_quota = 2;
+  uint64 normal_quota = 3;
+  bool patch_custom_quota = 4;
+  uint64 custom_quota = 5;
+  int64 normal_usage_diff = 6;
+  int64 custom_usage_diff = 7;
+}
+
+message LinkQuotaUpdateResponse {
+  string msg = 1;
+}
+
+message RoleChangeRequest {
+  string user_id_hex = 1;
+  int32 role = 2;
+}
+
+message RoleChangeResponse {
+  string msg = 1;
+}
+
+message UserDeleteRequest {
+  string user_id_hex = 1;
+}
+
+message UserDeleteResponse {
+  string msg = 1;
+}
+
+service UserService {
+  rpc Ping(google.protobuf.Empty) returns (PingResponse) {
+    option (google.api.http) = {get: "/v1/ping"};
+  }
+
+  rpc Register(RegisterRequest) returns (RegisterResponse) {
+    option (google.api.http) = {
+      post: "/v1/register"
+      body: "*"
+    };
+  }
+
+  rpc SelfInfoGet(google.protobuf.Empty) returns (SelfInfoGetResponse) {
+    option (google.api.http) = {get: "/v1/self"};
+  }
+
+  rpc UserInfoGet(UserInfoGetRequest) returns (UserInfoGetResponse) {
+    option (google.api.http) = {get: "/v1/user/{user_id_hex}"};
+  }
+
+  rpc UserDelete(UserDeleteRequest) returns (UserDeleteResponse) {
+    option (google.api.http) = {delete: "/v1/user/{user_id_hex}"};
+  }
+
+  rpc PwdChange(PwdChangeRequest) returns (PwdChangeResponse) {
+    option (google.api.http) = {
+      post: "/v1/pwd-change"
+      body: "*"
+    };
+  }
+
+  rpc LinkQuotaGet(LinkQuotaGetRequest) returns (LinkQuotaGetResponse) {
+    option (google.api.http) = {get: "/v1/user/{user_id_hex}/link_quota"};
+  }
+
+  // LinkQuotaUpdate (限內部使用)
+  rpc LinkQuotaUpdate(LinkQuotaUpdateRequest) returns (LinkQuotaUpdateResponse) {
+    option (google.api.http) = {patch: "/v1/user/{user_id_hex}/link_quota"};
+  }
+
+  rpc RoleChange(RoleChangeRequest) returns (RoleChangeResponse) {
+    option (google.api.http) = {
+      patch: "/v1/user/{user_id_hex}/role"
+      body: "*"
+    };
+  }
+
+  rpc Signin(SigninRequest) returns (SigninResponse) {
+    option (google.api.http) = {
+      post: "/v1/signin"
+      body: "*"
+    };
+  }
+
+  // GetAuthInfo (限內部使用) 取得已登入的 session 資訊
+  rpc GetAuthInfo(GetAuthInfoRequest) returns (GetAuthInfoResponse) {}
+
+  rpc Logout(google.protobuf.Empty) returns (LogoutResponse) {
+    option (google.api.http) = {post: "/v1/logout"};
+  }
+}

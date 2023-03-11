@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package redirector.v1;
+
+import "google/protobuf/empty.proto";
+
+option go_package = "./rdPB";
+
+message PingResponse {
+  string msg = 1;
+}
+
+service RDService {
+  rpc Ping(google.protobuf.Empty) returns (PingResponse) {}
+}
