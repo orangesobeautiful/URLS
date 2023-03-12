@@ -16,3 +16,10 @@
 3. 訂閱系統
 4. 短網址 QR Code
 5. 使用者自定義域名
+
+## 截圖
+
+連結管理
+![image](/demo/links-manage.webp)
+來源分析
+![image](/demo/urls-source.webp)
