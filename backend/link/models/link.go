@@ -390,7 +390,7 @@ func TagsAggreByUser(ctx context.Context, userID primitive.ObjectID) (tags []str
 	var res projectRes
 	err = linkColl.Aggregate(ctx,
 		[]bson.M{
-			bsonext.Match(bson.M{"creator": userID}),
+			bsonext.Match(bson.M{"creator": userID, "deleted": false}),
 			bsonext.Group(bson.M{"_id": nil, "tags": bsonext.Push("$tags")}),
 			bsonext.Project(bson.M{"_id": false, "tags": bsonext.Reduce("$tags", []string{}, bsonext.SetUnion([]string{"$$value", "$$this"}))}),
 		}).One(&res)
