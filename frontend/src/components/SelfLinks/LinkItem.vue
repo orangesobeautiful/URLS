@@ -110,7 +110,11 @@
                   <q-btn icon="delete" color="red-5" @click="deleteBtnClick"
                     >刪除</q-btn
                   >
-                  <q-btn v-if="showApplyBtn" color="orange" text-color="black"
+                  <q-btn
+                    v-if="showApplyBtn"
+                    color="orange"
+                    text-color="black"
+                    @click="applyBtnClick"
                     >更新</q-btn
                   >
                 </div>
@@ -229,7 +233,7 @@ const props = defineProps({
   linkInfo: null,
 });
 
-const emit = defineEmits(["deleted"]);
+const emit = defineEmits(["refreshLinks"]);
 
 const createDate = new Date(props.linkInfo.createAt);
 const createYear = createDate.getFullYear();
@@ -286,7 +290,6 @@ function copyShort() {
 
 const tagsMaxLen = 15;
 
-const sortedTags = Array.from(props.linkInfo.tags).sort();
 const linkTags = ref(props.linkInfo.tags);
 function tagsValid(tags) {
   return tags.length <= tagsMaxLen || "最多添加 " + tagsMaxLen + " tags";
@@ -301,6 +304,9 @@ function noteValid(note) {
   return note.length < noteMaxLen || "超過上限";
 }
 
+let tagsDiff = false;
+let propsTagsSorted = Array.from(props.linkInfo.tags).sort();
+let noteDiff = false;
 const showApplyBtn = ref(false);
 function changeHandle() {
   const arrEquals = (a, b) => {
@@ -308,16 +314,54 @@ function changeHandle() {
   };
 
   let linkTagsSorted = Array.from(linkTags.value).sort();
-  if (!arrEquals(linkTagsSorted, sortedTags)) {
-    showApplyBtn.value = true;
-    return;
+  if (arrEquals(linkTagsSorted, propsTagsSorted)) {
+    tagsDiff = false;
+  } else {
+    tagsDiff = true;
   }
-  if (note.value != props.linkInfo.note) {
-    showApplyBtn.value = true;
-    return;
+  if (note.value === props.linkInfo.note) {
+    noteDiff = false;
+  } else {
+    noteDiff = true;
   }
 
-  showApplyBtn.value = false;
+  if (tagsDiff || noteDiff) {
+    showApplyBtn.value = true;
+  } else {
+    showApplyBtn.value = false;
+  }
+}
+
+async function applyBtnClick() {
+  let patchData = {
+    patchTags: tagsDiff,
+    patchNote: noteDiff,
+  };
+  if (tagsDiff) {
+    patchData.tags = linkTags.value;
+  }
+  if (noteDiff) {
+    patchData.note = note.value;
+  }
+
+  detailLoading.value = true;
+  await api
+    .patch("/api/link/v1/link/" + props.linkInfo.idHex, patchData)
+    .then((res) => {
+      if (res) {
+        propsTagsSorted = Array.from(linkTags.value).sort();
+        tagsDiff = false;
+        noteDiff = false;
+        showApplyBtn.value = false;
+        showDetailDialog.value = false;
+        userStore.updateTags();
+        emit("refreshLinks");
+        dialog({
+          title: "修改成功",
+        });
+      }
+    });
+  detailLoading.value = false;
 }
 
 async function deleteBtnClick() {
@@ -332,11 +376,12 @@ async function deleteBtnClick() {
       .delete("/api/link/v1/link/" + props.linkInfo.idHex)
       .then((res) => {
         if (res) {
+          showDetailDialog.value = false;
+          userStore.updateTags();
+          emit("refreshLinks");
           dialog({
             title: "刪除成功",
           });
-          showDetailDialog.value = false;
-          emit("deleted");
         }
       });
     detailLoading.value = false;

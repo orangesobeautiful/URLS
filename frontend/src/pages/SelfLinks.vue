@@ -62,7 +62,7 @@
           v-for="link in filteredLinks"
           :key="link.idHex"
         >
-          <link-item :link-info="link" v-on:deleted="linkDeleted" />
+          <link-item :link-info="link" v-on:refreshLinks="refreshLinks" />
         </div>
 
         <q-inner-loading :showing="linkListLoading">
@@ -276,7 +276,7 @@ if (userStore.dataLoaded) {
   searchHandler();
 }
 
-function linkDeleted() {
+function refreshLinks() {
   totalNumQueried.value = false;
   searchHandler(true);
 }
